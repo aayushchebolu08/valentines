@@ -122,6 +122,11 @@
       display: block;
     }
 
+    .heart-shape {
+      clip-path: path('M160,40 C120,10 70,30 70,70 C70,110 120,150 160,180 C200,150 250,110 250,70 C250,30 200,10 160,40 Z');
+      object-fit: cover;
+    }
+
     @keyframes pop {
       from { transform: scale(.96); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -134,9 +139,9 @@
 
   <main class="card">
     <img 
-      class="art" 
+      class="art heart-shape" 
       src="valentines-image.JPG" 
-      alt="Valentine's illustration"
+      alt="dynamic duo"
     />
 
     <h1>SANULI WILL U BE MY VALENTINE?</h1>
