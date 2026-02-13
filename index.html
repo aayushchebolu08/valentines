@@ -133,43 +133,11 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
-    <!-- ANIMAL WITH HEART -->
-    <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="fur" x1="0" x2="1">
-          <stop offset="0" stop-color="#f7c7a1"/>
-          <stop offset="1" stop-color="#f2a97b"/>
-        </linearGradient>
-        <linearGradient id="heart" x1="0" x2="1">
-          <stop offset="0" stop-color="#ff4d7d"/>
-          <stop offset="1" stop-color="#ff1f68"/>
-        </linearGradient>
-      </defs>
-
-      <path d="M250 50 C250 33 270 25 282 38
-               C294 25 314 33 314 50
-               C314 78 282 92 282 106
-               C282 92 250 78 250 50Z"
-            fill="url(#heart)"/>
-
-      <path d="M90 120 C90 70 140 40 190 60
-               C240 40 290 70 290 120
-               C290 180 240 210 190 210
-               C140 210 90 180 90 120Z"
-            fill="url(#fur)"/>
-
-      <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
-      <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
-
-      <circle cx="160" cy="130" r="8"/>
-      <circle cx="220" cy="130" r="8"/>
-
-      <path d="M190 144 C186 144 182 148 182 152
-               C182 160 190 164 190 170
-               C190 164 198 160 198 152
-               C198 148 194 144 190 144Z"
-            fill="#ff7aa2"/>
-    </svg>
+    <img 
+      class="art" 
+      src="valentines-image.png" 
+      alt="Valentine's illustration"
+    />
 
     <h1>SANULI WILL U BE MY VALENTINE?</h1>
 
@@ -179,7 +147,7 @@
     </section>
 
     <!-- HINT -->
-    <div class="hint" id="hint">don't even think about clicking no</div>
+    <div class="hint" id="hint">there's only one right answer</div>
 
     <section class="result" id="result">
       <h2>YAY! 🎉</h2>
@@ -270,17 +238,17 @@
         
         // Update hint text
         if (noClickCount === 1) {
-          hint.textContent = "Are you sure about that? 🤨";
+          hint.textContent = "wrong answer....";
         } else if (noClickCount === 2) {
-          hint.textContent = "The 'Yes' button is looking pretty good now... 👀";
+          hint.textContent = "you must be confused";
         } else if (noClickCount === 3) {
-          hint.textContent = "Last chance before things get interesting! 😏";
+          hint.textContent = "WHY ARE U CLICKING NO";
         }
         
         // After max clicks, enable runaway mode
         if (noClickCount >= maxClicksBeforeRunaway) {
           isRunawayMode = true;
-          hint.textContent = "Now try to click 'No'... I dare you! 😈";
+          hint.textContent = "ok fine now u CANT click it";
           noBtn.style.cursor = "pointer";
         }
       }
@@ -301,15 +269,44 @@
       dx /= mag;
       dy /= mag;
 
-      let newLeft = (b.left - z.left) + dx * 150;
-      let newTop  = (b.top - z.top) + dy * 150;
+      // Increased movement distance for faster escape
+      let newLeft = (b.left - z.left) + dx * 200;
+      let newTop  = (b.top - z.top) + dy * 200;
+
+      // Add some randomness to prevent corner trapping
+      const randomAngle = (Math.random() - 0.5) * 0.5; // -0.25 to 0.25 radians
+      const cos = Math.cos(randomAngle);
+      const sin = Math.sin(randomAngle);
+      const rotatedDx = dx * cos - dy * sin;
+      const rotatedDy = dx * sin + dy * cos;
+      
+      newLeft = (b.left - z.left) + rotatedDx * 200;
+      newTop = (b.top - z.top) + rotatedDy * 200;
+
+      // Check if we're about to hit a corner/edge
+      const margin = 20;
+      const wouldHitLeft = newLeft < margin;
+      const wouldHitRight = newLeft > z.width - b.width - margin;
+      const wouldHitTop = newTop < margin;
+      const wouldHitBottom = newTop > z.height - b.height - margin;
+
+      // If stuck in corner, add extra push toward center
+      if ((wouldHitLeft || wouldHitRight) && (wouldHitTop || wouldHitBottom)) {
+        const centerX = z.width / 2 - b.width / 2;
+        const centerY = z.height / 2 - b.height / 2;
+        const toCenterX = centerX - (b.left - z.left);
+        const toCenterY = centerY - (b.top - z.top);
+        newLeft += toCenterX * 0.3;
+        newTop += toCenterY * 0.3;
+      }
 
       newLeft = clamp(newLeft, 0, z.width - b.width);
-      newTop  = clamp(newTop, 0, z.height - b.height);
+      newTop = clamp(newTop, 0, z.height - b.height);
 
       noBtn.style.left = newLeft + "px";
       noBtn.style.top = newTop + "px";
       noBtn.style.transform = `scale(${noScale})`;
+      noBtn.style.transition = "left 0.2s ease-out, top 0.2s ease-out";
     }
 
     zone.addEventListener("pointermove", e => {
@@ -320,7 +317,8 @@
         (b.left + b.width / 2) - e.clientX,
         (b.top + b.height / 2) - e.clientY
       );
-      if (d < 140) moveNo(e.clientX, e.clientY);
+      // Increased detection radius for earlier escape
+      if (d < 180) moveNo(e.clientX, e.clientY);
     });
 
     /* ---------- YES CLICK ---------- */
