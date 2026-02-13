@@ -83,7 +83,7 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.14);
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      transition: transform .12s ease, background .12s ease;
+      transition: transform .3s ease, background .12s ease;
     }
 
     #yesBtn {
@@ -179,7 +179,7 @@
     </section>
 
     <!-- HINT -->
-    <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+    <div class="hint" id="hint">Try clicking "No" if you dare... 😈</div>
 
     <section class="result" id="result">
       <h2>YAY! 🎉</h2>
@@ -243,14 +243,50 @@
       }, 300);
     }
 
-    /* ---------- YES BUTTON GROWS ---------- */
+    /* ---------- BUTTON SCALING ---------- */
+    let noClickCount = 0;
+    const maxClicksBeforeRunaway = 4;
     let yesScale = 1;
-    function growYes() {
-      yesScale = Math.min(2.2, yesScale + 0.1);
+    let noScale = 1;
+    let isRunawayMode = false;
+
+    function updateButtonScales() {
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+      noBtn.style.transform = `translateY(-50%) scale(${noScale})`;
     }
 
-    /* ---------- NO BUTTON RUNS AWAY ---------- */
+    /* ---------- NO BUTTON CLICK HANDLER ---------- */
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      
+      if (!isRunawayMode) {
+        noClickCount++;
+        
+        // Grow Yes, shrink No
+        yesScale += 0.3;
+        noScale -= 0.18;
+        
+        updateButtonScales();
+        
+        // Update hint text
+        if (noClickCount === 1) {
+          hint.textContent = "Are you sure about that? 🤨";
+        } else if (noClickCount === 2) {
+          hint.textContent = "The 'Yes' button is looking pretty good now... 👀";
+        } else if (noClickCount === 3) {
+          hint.textContent = "Last chance before things get interesting! 😏";
+        }
+        
+        // After max clicks, enable runaway mode
+        if (noClickCount >= maxClicksBeforeRunaway) {
+          isRunawayMode = true;
+          hint.textContent = "Now try to click 'No'... I dare you! 😈";
+          noBtn.style.cursor = "pointer";
+        }
+      }
+    });
+
+    /* ---------- NO BUTTON RUNS AWAY (after clicks) ---------- */
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
@@ -273,12 +309,12 @@
 
       noBtn.style.left = newLeft + "px";
       noBtn.style.top = newTop + "px";
-      noBtn.style.transform = "none";
-
-      growYes();
+      noBtn.style.transform = `scale(${noScale})`;
     }
 
     zone.addEventListener("pointermove", e => {
+      if (!isRunawayMode) return;
+      
       const b = noBtn.getBoundingClientRect();
       const d = Math.hypot(
         (b.left + b.width / 2) - e.clientX,
@@ -287,12 +323,10 @@
       if (d < 140) moveNo(e.clientX, e.clientY);
     });
 
-    noBtn.addEventListener("click", e => e.preventDefault());
-
     /* ---------- YES CLICK ---------- */
     yesBtn.addEventListener("click", () => {
       zone.style.display = "none";
-      hint.style.display = "none";     // HIDE THE HINT
+      hint.style.display = "none";
       result.style.display = "block";
       resizeConfettiCanvas();
       fullScreenConfetti();
