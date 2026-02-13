@@ -135,7 +135,7 @@
   <main class="card">
     <img 
       class="art" 
-      src="valentines-image.png" 
+      src="valentines-image.JPG" 
       alt="Valentine's illustration"
     />
 
@@ -255,71 +255,88 @@
     });
 
     /* ---------- NO BUTTON RUNS AWAY (after clicks) ---------- */
-    function clamp(n, min, max) {
-      return Math.max(min, Math.min(max, n));
-    }
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
 
-    function moveNo(px, py) {
-      const z = zone.getBoundingClientRect();
-      const b = noBtn.getBoundingClientRect();
+function moveNo(px, py) {
+  const z = zone.getBoundingClientRect();
+  const b = noBtn.getBoundingClientRect();
 
-      let dx = (b.left + b.width / 2) - px;
-      let dy = (b.top + b.height / 2) - py;
-      let mag = Math.hypot(dx, dy) || 1;
-      dx /= mag;
-      dy /= mag;
+  let dx = (b.left + b.width / 2) - px;
+  let dy = (b.top + b.height / 2) - py;
+  let mag = Math.hypot(dx, dy) || 1;
+  dx /= mag;
+  dy /= mag;
 
-      // Increased movement distance for faster escape
-      let newLeft = (b.left - z.left) + dx * 200;
-      let newTop  = (b.top - z.top) + dy * 200;
+  // Add significant randomness for unpredictable movement
+  const randomAngle = (Math.random() - 0.5) * 1.2; // More randomness
+  const cos = Math.cos(randomAngle);
+  const sin = Math.sin(randomAngle);
+  const rotatedDx = dx * cos - dy * sin;
+  const rotatedDy = dx * sin + dy * cos;
+  
+  // Increased movement distance
+  let newLeft = (b.left - z.left) + rotatedDx * 220;
+  let newTop = (b.top - z.top) + rotatedDy * 220;
 
-      // Add some randomness to prevent corner trapping
-      const randomAngle = (Math.random() - 0.5) * 0.5; // -0.25 to 0.25 radians
-      const cos = Math.cos(randomAngle);
-      const sin = Math.sin(randomAngle);
-      const rotatedDx = dx * cos - dy * sin;
-      const rotatedDy = dx * sin + dy * cos;
-      
-      newLeft = (b.left - z.left) + rotatedDx * 200;
-      newTop = (b.top - z.top) + rotatedDy * 200;
+  // Check distance from edges
+  const margin = 30;
+  const currentLeft = b.left - z.left;
+  const currentTop = b.top - z.top;
+  
+  const distToLeft = currentLeft;
+  const distToRight = z.width - (currentLeft + b.width);
+  const distToTop = currentTop;
+  const distToBottom = z.height - (currentTop + b.height);
 
-      // Check if we're about to hit a corner/edge
-      const margin = 20;
-      const wouldHitLeft = newLeft < margin;
-      const wouldHitRight = newLeft > z.width - b.width - margin;
-      const wouldHitTop = newTop < margin;
-      const wouldHitBottom = newTop > z.height - b.height - margin;
+  // If too close to any edge, push away from it more aggressively
+  if (distToLeft < margin) {
+    newLeft += 100; // Push right
+  }
+  if (distToRight < margin) {
+    newLeft -= 100; // Push left
+  }
+  if (distToTop < margin) {
+    newTop += 100; // Push down
+  }
+  if (distToBottom < margin) {
+    newTop -= 100; // Push up
+  }
 
-      // If stuck in corner, add extra push toward center
-      if ((wouldHitLeft || wouldHitRight) && (wouldHitTop || wouldHitBottom)) {
-        const centerX = z.width / 2 - b.width / 2;
-        const centerY = z.height / 2 - b.height / 2;
-        const toCenterX = centerX - (b.left - z.left);
-        const toCenterY = centerY - (b.top - z.top);
-        newLeft += toCenterX * 0.3;
-        newTop += toCenterY * 0.3;
-      }
+  // If stuck in corner or edge, teleport to random safe position
+  const isStuck = (distToLeft < margin || distToRight < margin) && 
+                  (distToTop < margin || distToBottom < margin);
+  
+  if (isStuck) {
+    // Random position in the middle 60% of the zone
+    const safeZoneWidth = z.width * 0.6;
+    const safeZoneHeight = z.height * 0.6;
+    newLeft = (z.width * 0.2) + Math.random() * safeZoneWidth - b.width / 2;
+    newTop = (z.height * 0.2) + Math.random() * safeZoneHeight - b.height / 2;
+  }
 
-      newLeft = clamp(newLeft, 0, z.width - b.width);
-      newTop = clamp(newTop, 0, z.height - b.height);
+  // Clamp to bounds
+  newLeft = clamp(newLeft, 5, z.width - b.width - 5);
+  newTop = clamp(newTop, 5, z.height - b.height - 5);
 
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top = newTop + "px";
-      noBtn.style.transform = `scale(${noScale})`;
-      noBtn.style.transition = "left 0.2s ease-out, top 0.2s ease-out";
-    }
+  noBtn.style.left = newLeft + "px";
+  noBtn.style.top = newTop + "px";
+  noBtn.style.transform = `scale(${noScale})`;
+  noBtn.style.transition = "left 0.15s ease-out, top 0.15s ease-out";
+}
 
-    zone.addEventListener("pointermove", e => {
-      if (!isRunawayMode) return;
-      
-      const b = noBtn.getBoundingClientRect();
-      const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
-      );
-      // Increased detection radius for earlier escape
-      if (d < 180) moveNo(e.clientX, e.clientY);
-    });
+zone.addEventListener("pointermove", e => {
+  if (!isRunawayMode) return;
+  
+  const b = noBtn.getBoundingClientRect();
+  const d = Math.hypot(
+    (b.left + b.width / 2) - e.clientX,
+    (b.top + b.height / 2) - e.clientY
+  );
+  // Increased detection radius for earlier escape
+  if (d < 200) moveNo(e.clientX, e.clientY);
+});
 
     /* ---------- YES CLICK ---------- */
     yesBtn.addEventListener("click", () => {
