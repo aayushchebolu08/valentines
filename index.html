@@ -340,13 +340,20 @@ zone.addEventListener("pointermove", e => {
 });
 
     /* ---------- YES CLICK ---------- */
-    yesBtn.addEventListener("click", () => {
-      zone.style.display = "none";
-      hint.style.display = "none";
-      result.style.display = "block";
-      resizeConfettiCanvas();
-      fullScreenConfetti();
-    });
+yesBtn.addEventListener("click", () => {
+  // Hide the image
+  document.querySelector('.art').style.display = "none";
+  // Hide the heading
+  document.querySelector('h1').style.display = "none";
+  // Hide buttons
+  zone.style.display = "none";
+  // Hide hint
+  hint.style.display = "none";
+  // Show celebration
+  result.style.display = "block";
+  resizeConfettiCanvas();
+  fullScreenConfetti();
+});
   </script>
 </body>
 </html>
